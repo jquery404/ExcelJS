@@ -154,36 +154,116 @@ function handleCellInput(row, col, input) {
 function evaluateFormula(formula) {
 
     const sumRegex = /^SUM\((\w+\d+:\w+\d+)\)$/i;
-    const sumMatch = formula.match(sumRegex);
+    const averageRegex = /^AVERAGE\((\w+\d+:\w+\d+)\)$/i;
+    const stdRegex = /^STD\((\w+\d+:\w+\d+)\)$/i;
 
+    const sumMatch = formula.match(sumRegex);
+    const averageMatch = formula.match(averageRegex);
+    const stdMatch = formula.match(stdRegex);
     const cellRefs = formula.match(/[A-Z]+\d+/g);
 
-
-    if (sumMatch) {
-        const range = sumMatch[1].split(':');
-        const startCell = range[0];
-        const endCell = range[1];
-        return sumRange(startCell, endCell);
-    }
-    else if (cellRefs) { 
-        const evaluatedFormula = formula.replace(/[A-Z]+\d+/g, (cellRef) => {
-            const [colStr, rowStr] = cellRef.match(/([A-Z]+)(\d+)/).slice(1);
-            const col = colStr.charCodeAt(0) - 65; 
-            const row = parseInt(rowStr); 
-            const cellValue = cellData[`${row}-${col}`].value;
-            if (cellValue !== undefined) {
-                return cellValue.toString();
-            } else {
-                return '#REF!'; 
-            }
-        });
-        try {
-            return eval(evaluatedFormula);
-        } catch (error) {
-            console.error(error);
-            return null; 
-        }
+    if (sumMatch) 
+    {
+        return evaluateFunction(sumMatch[1], sumRange);
+    } 
+    else if (averageMatch) 
+    {
+        return evaluateFunction(averageMatch[1], averageRange);
+    } 
+    else if (stdMatch) 
+    {
+        return evaluateFunction(stdMatch[1], stdRange);
+    } 
+    else if (cellRefs) 
+    { 
+        return evaluateExpression(formula);
     }
     
     return null;
+}
+
+function evaluateFunction(range, func) {
+    const [startCell, endCell] = range.split(':');
+    return func(startCell, endCell);
+}
+
+function evaluateExpression(formula) {
+    try {
+        const evaluatedFormula = formula.replace(/[A-Z]+\d+/g, (cellRef) => {
+            const [colStr, rowStr] = cellRef.match(/([A-Z]+)(\d+)/).slice(1);
+            const col = colStr.charCodeAt(0) - 65;
+            const row = parseInt(rowStr);
+            const cellValue = cellData[`${row}-${col}`]?.value;
+            return cellValue !== undefined ? cellValue.toString() : '#REF!';
+        });
+        return eval(evaluatedFormula);
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+function sumRange(startCell, endCell) {
+    const cellIdx = getRowAndCols(startCell, endCell);
+
+    let sum = 0;
+    for (let row = cellIdx.startRow; row <= cellIdx.endRow; row++) {
+        for (let col = cellIdx.startCol; col <= cellIdx.endCol; col++) {
+            const cellValue = cellData[`${row+1}-${col}`].value;
+            if (!isNaN(cellValue)) {
+                sum += cellValue;
+            }
+        }
+    }
+    return sum;
+}
+
+function averageRange(startCell, endCell) {
+    const cellIdx = getRowAndCols(startCell, endCell);
+
+    let sum = 0;
+    let count = 0;
+    for (let row = cellIdx.startRow; row <= cellIdx.endRow; row++) {
+        for (let col = cellIdx.startCol; col <= cellIdx.endCol; col++) {
+            const cellValue = cellData[`${row+1}-${col}`].value;
+            if (!isNaN(cellValue)) {
+                sum += cellValue;
+                count++;
+            }
+        }
+    }
+    
+    return count > 0 ? sum / count : 0;
+}
+
+// standard deviation 
+function stdRange(startCell, endCell) {
+    const cellIdx = getRowAndCols(startCell, endCell);
+    
+    const values = [];
+    for (let row = cellIdx.startRow; row <= cellIdx.endRow; row++) {
+        for (let col = cellIdx.startCol; col <= cellIdx.endCol; col++) {
+            const cellValue = cellData[`${row+1}-${col}`].value;
+            if (!isNaN(cellValue)) {
+                values.push(cellValue);
+            }
+        }
+    }
+    
+    if (values.length > 1) {
+        const mean = values.reduce((acc, val) => acc + val, 0) / values.length;
+        const variance = values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / values.length;
+        return Math.sqrt(variance);
+    } else {
+        return 0;
+    }
+}
+
+function getRowAndCols(startCell, endCell) {
+    return {
+        startRow:parseInt(startCell.match(/\d+/)[0]) - 1, 
+        startCol:startCell.charCodeAt(0) - 65, 
+        endRow:parseInt(endCell.match(/\d+/)[0]) - 1, 
+        endCol:endCell.charCodeAt(0) - 65
+    };
 }
