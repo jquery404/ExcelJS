@@ -1,5 +1,17 @@
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.form-container {
+    width: 300px;
+    margin-left: 20px; 
+}
+
 form {
     width: 300px;
+    margin-bottom: 10px;
 }
 
 label {
@@ -27,4 +39,26 @@ button {
 
 button:hover {
     background-color: #45a049;
+}
+
+#grid-container {
+    display: grid;
+    grid-template-columns: repeat(100, 50px); 
+    grid-template-rows: repeat(100, 50px);
+    gap: 1px; 
+    border: 1px solid black;
+    width: calc(100 * 50px + 100px);
+    height: calc(100 * 50px + 100px);
+    overflow: auto;
+    padding: 2em;
+}
+
+.cell {
+    border: 1px solid black;
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    line-height: 50px;
+    overflow: hidden;
+    white-space: nowrap;
 }
