@@ -62,3 +62,19 @@ button:hover {
     overflow: hidden;
     white-space: nowrap;
 }
+
+.context-menu {
+    background-color: #f8f9fa; 
+    border: 1px solid #ced4da;
+    padding: 5px;
+    border-radius: 4px; 
+}
+
+.context-menu div {
+    padding: 5px 10px; 
+    cursor: pointer;
+}
+
+.context-menu div:hover {
+    background-color: #e9ecef; 
+}

@@ -267,3 +267,59 @@ function getRowAndCols(startCell, endCell) {
         endCol:endCell.charCodeAt(0) - 65
     };
 }
+
+
+// Cell styles menu on right click
+gridContainer.addEventListener('contextmenu', function(event) {
+    event.preventDefault(); 
+    const cell = event.target;
+    if (cell.classList.contains('cell')) {
+        showContextMenu(event.clientX, event.clientY, function(style) {
+            applyStyle(cell, style);
+        });
+    }
+});
+
+function showContextMenu(x, y, onSelect) {
+    const options = ['Bold', 'Italic', 'Underline']; // .. add more 
+
+    const contextMenu = document.createElement('div');
+    contextMenu.classList.add('context-menu');
+    contextMenu.style.cssText = `position: absolute; left: ${x}px; top: ${y}px;`;
+
+    options.forEach(option => {
+        const optionElement = document.createElement('div');
+        optionElement.textContent = option;
+        optionElement.addEventListener('click', function() {
+            onSelect(option.toLowerCase());
+            contextMenu.remove();
+        });
+        contextMenu.appendChild(optionElement);
+    });
+
+    document.body.appendChild(contextMenu);
+
+    const closeContextMenu = function(event) {
+        if (!contextMenu.contains(event.target)) {
+            contextMenu.remove();
+            document.removeEventListener('click', closeContextMenu);
+        }
+    };
+
+    document.addEventListener('click', closeContextMenu);
+}
+
+function applyStyle(cell, style) {
+    const currentStyles = cell.style.fontWeight + ' ' + cell.style.fontStyle + ' ' + cell.style.textDecoration;
+    switch (style) {
+        case 'bold':
+            cell.style.fontWeight = currentStyles.includes('bold') ? 'normal' : 'bold';
+            break;
+        case 'italic':
+            cell.style.fontStyle = currentStyles.includes('italic') ? 'normal' : 'italic';
+            break;
+        case 'underline':
+            cell.style.textDecoration = currentStyles.includes('underline') ? 'none' : 'underline';
+            break;
+    }
+}
