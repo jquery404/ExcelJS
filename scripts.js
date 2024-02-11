@@ -75,4 +75,115 @@ form.addEventListener('submit', (event) => {
         } while (quotient > 0);
         return label;
     }
+
+    repopulateGrid();
 });
+
+// Repopulate the grid from cellData object
+function repopulateGrid() {
+    Object.entries(cellData).forEach(([key, cellInfo]) => {
+        const [row, col] = key.split('-').map(Number);
+        const cell = gridContainer.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+        if (cell) {
+            // cell.textContent = value;
+            const value = cellInfo.formula ? evaluateFormula(cellInfo.formula.substring(1)) : cellInfo.value;
+            cell.textContent = value;
+        }
+    });
+}
+
+// Cell click event listener
+gridContainer.addEventListener('click', function(event) {
+    const cell = event.target;
+    if (cell.classList.contains('cell')) {
+      const row = cell.dataset.row;
+      const col = cell.dataset.col;
+      console.log(row, col);
+  
+      const cellInfo = cellData[`${row}-${col}`];
+      const cellValue = cellInfo ? (cellInfo.formula || cellInfo.value) : '';
+      const input = prompt(`Enter number for cell ${String.fromCharCode(65 + parseInt(col))}${row}`, cellValue)
+      
+      handleCellInput(row, col, input);
+      repopulateGrid();
+    }
+});
+
+
+// Handle cell input 
+function handleCellInput(row, col, input) {
+    if (input === null || input.trim() === '') {
+        return; 
+    }
+
+    let cellContent, cellDataType;
+
+    if (input.startsWith('=')) {
+        const formula = input.substring(1);
+        const result = evaluateFormula(formula);
+
+        if (result !== null) {
+            cellContent = result;
+            cellDataType = input;
+        } else {
+            alert('Invalid formula.');
+            return;
+        }
+    } else {
+        const parsedValue = parseFloat(input);
+        if (!isNaN(parsedValue)) {
+            cellContent = parsedValue;
+            cellDataType = null; 
+        } else {
+            alert('Enter a valid number.');
+            return; 
+        }
+    }
+
+    const cell = gridContainer.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+    if (cell) {
+        cell.textContent = cellContent;
+    }
+
+    cellData[`${row}-${col}`] = {
+        formula: cellDataType,
+        value: cellContent
+    };
+}
+
+function evaluateFormula(formula) {
+
+    const sumRegex = /^SUM\((\w+\d+:\w+\d+)\)$/i;
+    const sumMatch = formula.match(sumRegex);
+
+    const cellRefs = formula.match(/[A-Z]+\d+/g);
+
+
+    if (sumMatch) {
+        const range = sumMatch[1].split(':');
+        const startCell = range[0];
+        const endCell = range[1];
+        return sumRange(startCell, endCell);
+    }
+    else if (cellRefs) { 
+        const evaluatedFormula = formula.replace(/[A-Z]+\d+/g, (cellRef) => {
+            const [colStr, rowStr] = cellRef.match(/([A-Z]+)(\d+)/).slice(1);
+            const col = colStr.charCodeAt(0) - 65; 
+            const row = parseInt(rowStr); 
+            const cellValue = cellData[`${row}-${col}`].value;
+            if (cellValue !== undefined) {
+                return cellValue.toString();
+            } else {
+                return '#REF!'; 
+            }
+        });
+        try {
+            return eval(evaluatedFormula);
+        } catch (error) {
+            console.error(error);
+            return null; 
+        }
+    }
+    
+    return null;
+}
