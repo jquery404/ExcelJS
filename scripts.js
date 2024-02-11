@@ -98,7 +98,6 @@ gridContainer.addEventListener('click', function(event) {
     if (cell.classList.contains('cell')) {
       const row = cell.dataset.row;
       const col = cell.dataset.col;
-      console.log(row, col);
   
       const cellInfo = cellData[`${row}-${col}`];
       const cellValue = cellInfo ? (cellInfo.formula || cellInfo.value) : '';
@@ -119,6 +118,7 @@ function handleCellInput(row, col, input) {
     let cellContent, cellDataType;
 
     if (input.startsWith('=')) {
+        input = input.toUpperCase();
         const formula = input.substring(1);
         const result = evaluateFormula(formula);
 
