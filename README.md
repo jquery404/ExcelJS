@@ -1,5 +1,7 @@
 # ExcelJS
 
+![ExcelJS](cbc46689fb.gif)
+
 This is a simple mini spreadsheet application implemented using JavaScript, HTML and CSS that looks and works like Excel. 
 
 ## Features
